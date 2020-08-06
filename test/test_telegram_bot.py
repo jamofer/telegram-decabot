@@ -1,6 +1,5 @@
 import unittest
 
-import telegram_bot
 from mock import patch, MagicMock
 from telegram import Update, Message
 from telegram.ext import CallbackContext
