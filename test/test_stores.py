@@ -3,16 +3,19 @@ import json
 import unittest
 from datetime import time, datetime
 
-from decathlon import stores
-from decathlon.stores import OpeningHour, GeoPosition
+from decathlon import decathlon_stores, store_decoder
+from decathlon.store import OpeningHour, GeoPosition
 from mock import patch
 
 
 class TestStores(unittest.TestCase):
+    def tearDown(self) -> None:
+        patch.stopall()
+
     def test_it_decodes_a_store_from_json(self):
         store_dict = json.loads(TEST_STORE_JSON)
 
-        store = stores._decode_store(store_dict)
+        store = store_decoder.decode(store_dict)
 
         assert store.id == '001'
         assert store.name == 'Test'
@@ -31,10 +34,10 @@ class TestStores(unittest.TestCase):
         assert store.position == GeoPosition(latitude=39.572838, longitude=2.642547)
 
     def test_it_decodes_all_stores(self):
-        stores.Stores()
+        decathlon_stores.DecathlonStores()
 
     def test_it_finds_stores_by_name(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_name('Durango')
 
@@ -42,42 +45,42 @@ class TestStores(unittest.TestCase):
         assert result[0].name == 'Durango'
 
     def test_it_finds_stores_by_part_of_the_name(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_name('Duran')
 
         assert any(store.name == 'Durango' for store in result)
 
     def test_it_finds_stores_by_city(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_city('Madrid')
 
         assert all(store.city == 'Madrid' for store in result)
 
     def test_it_finds_stores_by_part_of_the_city_name(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_city('Mad')
 
         assert any(store.city == 'Madrid' for store in result)
 
     def test_it_finds_stores_by_zip_code(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_zip_code('48200')
 
         assert all(store.zip_code == '48200' for store in result)
 
     def test_it_finds_stores_by_part_of_the_zip_code_name(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_zip_code('482')
 
         assert any(store.zip_code == '48200' for store in result)
 
     def test_it_finds_stores_by_distance_from_a_geo_position(self):
-        stores_collection = stores.Stores()
+        stores_collection = decathlon_stores.DecathlonStores()
 
         result = stores_collection.find_by_distance(
             position=GeoPosition(39.5, 2.8),
@@ -87,10 +90,10 @@ class TestStores(unittest.TestCase):
         assert all('Mallorca' in store.city for store in result)
 
     def test_it_returns_store_is_open_or_closed(self):
-        self.datetime = patch('decathlon.stores.datetime').start()
+        self.datetime = patch('decathlon.store.datetime').start()
         store_dict = json.loads(TEST_STORE_JSON)
 
-        store = stores._decode_store(store_dict)
+        store = store_decoder.decode(store_dict)
 
         self.datetime.now.return_value = datetime(2020, 1, 10, 12, 0)
         assert store.is_open
